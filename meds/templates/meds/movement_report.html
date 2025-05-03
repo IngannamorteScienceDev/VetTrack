@@ -1,0 +1,82 @@
+{% extends 'meds/base.html' %}
+{% block title %}Отчёт по движениям{% endblock %}
+{% block content %}
+
+<h2 class="text-2xl font-bold mb-6">Отчёт по движениям препаратов</h2>
+
+<!-- 🔍 Форма фильтрации -->
+<form method="get" class="mb-6 space-y-4">
+  <div class="flex flex-wrap gap-4 items-center text-sm">
+    <label>
+      С:
+      <input type="date" name="start_date" value="{{ start_date }}" class="border rounded px-2 py-1">
+    </label>
+    <label>
+      По:
+      <input type="date" name="end_date" value="{{ end_date }}" class="border rounded px-2 py-1">
+    </label>
+    <label>
+      Тип:
+      <select name="type" class="border rounded px-2 py-1">
+        <option value="">Все</option>
+        <option value="in" {% if active_type == 'in' %}selected{% endif %}>Приход</option>
+        <option value="out" {% if active_type == 'out' %}selected{% endif %}>Расход</option>
+      </select>
+    </label>
+    <button type="submit" class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-1.5 rounded shadow">
+      Применить
+    </button>
+    <a href="{% url 'movement_report' %}" class="text-gray-600 underline">Сброс</a>
+  </div>
+
+  <div class="space-x-3 mt-2 text-sm">
+    <a href="?quick=7" class="text-cyan-700 underline {% if quick == '7' %}font-bold{% endif %}">За 7 дней</a>
+    <a href="?quick=30" class="text-cyan-700 underline {% if quick == '30' %}font-bold{% endif %}">За 30 дней</a>
+    <a href="{% url 'movement_report' %}" class="text-cyan-700 underline {% if not quick %}font-bold{% endif %}">Всё время</a>
+  </div>
+</form>
+
+<!-- 📥 Экспорт -->
+<div class="mb-4">
+  <a href="#" onclick="alert('Экспорт ещё не подключён')" class="text-cyan-700 underline">📥 Экспорт в Excel</a>
+</div>
+
+<!-- 📋 Таблица -->
+<table class="w-full table-auto bg-white shadow rounded-lg text-sm">
+  <thead>
+    <tr class="bg-cyan-100 text-gray-800">
+      <th class="px-4 py-2 text-left">Дата</th>
+      <th class="px-4 py-2 text-left">Препарат</th>
+      <th class="px-4 py-2 text-left">Тип</th>
+      <th class="px-4 py-2 text-left">Количество</th>
+      <th class="px-4 py-2 text-left">Примечание</th>
+      <th class="px-4 py-2 text-left">Добавил</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for move in movements %}
+      <tr class="border-t">
+        <td class="px-4 py-2 whitespace-nowrap">{{ move.date|date:"d.m.Y H:i" }}</td>
+        <td class="px-4 py-2">{{ move.drug.name }}</td>
+        <td class="px-4 py-2">
+          {% if move.movement_type == 'in' %}
+            <span class="text-green-600">Приход</span>
+          {% else %}
+            <span class="text-red-600">Расход</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2">{{ move.quantity }}</td>
+        <td class="px-4 py-2">{{ move.note|default:"—" }}</td>
+        <td class="px-4 py-2">{{ move.created_by|default:"—" }}</td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="6" class="text-center text-gray-500 px-4 py-6">Нет данных за выбранный период</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<a href="{% url 'drug_list' %}" class="inline-block mt-6 text-cyan-700 underline">← Назад к списку препаратов</a>
+
+{% endblock %}

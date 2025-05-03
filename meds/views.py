@@ -194,3 +194,44 @@ def toggle_archive_drug(request, drug_id):
     else:
         messages.success(request, f"Препарат «{drug.name}» восстановлен.")
     return redirect('drug_list')
+
+@login_required
+def movement_report(request):
+    movements = DrugMovement.objects.select_related("drug").order_by('-date')
+
+    start_date_str = request.GET.get("start_date")
+    end_date_str = request.GET.get("end_date")
+    movement_type = request.GET.get("type")
+    quick = request.GET.get("quick")
+
+    # Быстрые фильтры
+    today = timezone.now()
+    if quick == "7":
+        start_date = today - timedelta(days=7)
+        end_date = today
+    elif quick == "30":
+        start_date = today - timedelta(days=30)
+        end_date = today
+    else:
+        start_date = parse_date(start_date_str) if start_date_str else None
+        end_date = parse_date(end_date_str) if end_date_str else None
+
+    # Применяем фильтры
+    if start_date and end_date:
+        movements = movements.filter(date__date__range=(start_date, end_date))
+    elif start_date:
+        movements = movements.filter(date__date__gte=start_date)
+    elif end_date:
+        movements = movements.filter(date__date__lte=end_date)
+
+    if movement_type in ["in", "out"]:
+        movements = movements.filter(movement_type=movement_type)
+
+    return render(request, 'meds/movement_report.html', {
+        'movements': movements,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'quick': quick,
+        'active_type': movement_type
+    })
+
