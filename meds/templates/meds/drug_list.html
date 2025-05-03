@@ -49,8 +49,9 @@
             <span class="text-green-600">ОК</span>
           {% endif %}
         </td>
-        <td class="px-4 py-2">
-          <a href="{% url 'create_movement' drug.id %}" class="text-blue-600 underline">Добавить движение</a>
+        <td class="px-4 py-2 space-y-1">
+          <a href="{% url 'create_movement' drug.id %}" class="block text-blue-600 hover:underline">➕ Движение</a>
+          <a href="{% url 'drug_history' drug.id %}" class="block text-gray-600 hover:underline">📄 История</a>
         </td>
       </tr>
       {% endwith %}
