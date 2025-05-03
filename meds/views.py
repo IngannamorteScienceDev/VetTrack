@@ -14,6 +14,7 @@ def is_veterinarian(user):
 def drug_list(request):
     drugs = Drug.objects.all().order_by('expiration_date')
     today = timezone.now().date()
+    status_filter = request.GET.get('status')  # ← фильтрация через GET
 
     # Генерируем список с пометками
     annotated_drugs = []
@@ -25,12 +26,18 @@ def drug_list(request):
         else:
             status = 'ok'
 
+        if status_filter and status != status_filter:
+            continue
+
         annotated_drugs.append({
             'object': drug,
             'status': status,
         })
 
-    return render(request, 'meds/drug_list.html', {'annotated_drugs': annotated_drugs})
+    return render(request, 'meds/drug_list.html', {
+        'annotated_drugs': annotated_drugs,
+        'active_filter': status_filter
+    })
 
 
 @login_required
