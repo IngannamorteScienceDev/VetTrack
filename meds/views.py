@@ -237,3 +237,59 @@ def movement_report(request):
 
 def index(request):
     return render(request, 'meds/index.html')
+
+@login_required
+def movement_report_export_excel(request):
+    movements = DrugMovement.objects.select_related("drug").order_by('-date')
+
+    # Фильтры
+    start_date_str = request.GET.get("start_date")
+    end_date_str = request.GET.get("end_date")
+    movement_type = request.GET.get("type")
+    quick = request.GET.get("quick")
+
+    today = timezone.now()
+    if quick == "7":
+        start_date = today - timedelta(days=7)
+        end_date = today
+    elif quick == "30":
+        start_date = today - timedelta(days=30)
+        end_date = today
+    else:
+        start_date = parse_date(start_date_str) if start_date_str else None
+        end_date = parse_date(end_date_str) if end_date_str else None
+
+    if start_date and end_date:
+        movements = movements.filter(date__date__range=(start_date, end_date))
+    elif start_date:
+        movements = movements.filter(date__date__gte=start_date)
+    elif end_date:
+        movements = movements.filter(date__date__lte=end_date)
+
+    if movement_type in ["in", "out"]:
+        movements = movements.filter(movement_type=movement_type)
+
+    # Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Движения"
+
+    ws.append(["Дата", "Препарат", "Тип", "Количество", "Примечание", "Кем добавлено"])
+
+    for m in movements:
+        ws.append([
+            m.date.strftime("%d.%m.%Y %H:%M"),
+            m.drug.name,
+            "Приход" if m.movement_type == "in" else "Расход",
+            m.quantity,
+            m.note or "",
+            str(m.created_by) if m.created_by else "—"
+        ])
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="movement_report.xlsx"'
+    wb.save(response)
+    return response
+

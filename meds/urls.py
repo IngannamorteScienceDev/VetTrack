@@ -11,4 +11,5 @@ urlpatterns = [
     path('drug/<int:drug_id>/toggle-archive/', views.toggle_archive_drug, name='toggle_archive_drug'),
     path('report/', views.movement_report, name='movement_report'),
     path('', views.index, name='index'),
+    path('report/export/', views.movement_report_export_excel, name='movement_report_export_excel'),
 ]

@@ -38,7 +38,10 @@
 
 <!-- 📥 Экспорт -->
 <div class="mb-4">
-  <a href="#" onclick="alert('Экспорт ещё не подключён')" class="text-cyan-700 underline">📥 Экспорт в Excel</a>
+<a href="{% url 'movement_report_export_excel' %}?{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}{% if quick %}quick={{ quick }}&{% endif %}{% if active_type %}type={{ active_type }}{% endif %}"
+   class="text-cyan-700 underline">
+  📥 Экспорт в Excel
+</a>
 </div>
 
 <!-- 📋 Таблица -->
