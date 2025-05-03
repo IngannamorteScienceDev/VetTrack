@@ -81,3 +81,13 @@ def create_drug(request):
         form = DrugForm()
 
     return render(request, 'meds/create_drug.html', {'form': form})
+
+@login_required
+def drug_history(request, drug_id):
+    drug = get_object_or_404(Drug, id=drug_id)
+    movements = DrugMovement.objects.filter(drug=drug).order_by('-date')
+
+    return render(request, 'meds/drug_history.html', {
+        'drug': drug,
+        'movements': movements,
+    })

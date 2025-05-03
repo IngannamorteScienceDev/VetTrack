@@ -1,0 +1,38 @@
+{% extends 'meds/base.html' %}
+{% block title %}История препарата{% endblock %}
+{% block content %}
+
+<h2 class="text-2xl font-bold mb-4">История движения: {{ drug.name }}</h2>
+
+<table class="w-full table-auto bg-white shadow rounded-lg">
+  <thead>
+    <tr class="bg-blue-100">
+      <th class="px-4 py-2">Дата</th>
+      <th class="px-4 py-2">Тип</th>
+      <th class="px-4 py-2">Количество</th>
+      <th class="px-4 py-2">Примечание</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for move in movements %}
+    <tr class="border-t">
+      <td class="px-4 py-2">{{ move.date|date:"d.m.Y H:i" }}</td>
+      <td class="px-4 py-2">
+        {% if move.movement_type == 'in' %}
+          <span class="text-green-600">Приход</span>
+        {% else %}
+          <span class="text-red-600">Расход</span>
+        {% endif %}
+      </td>
+      <td class="px-4 py-2">{{ move.quantity }}</td>
+      <td class="px-4 py-2">{{ move.note|default:"—" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" class="text-center py-4 text-gray-500">Движений пока нет</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<a href="{% url 'drug_list' %}" class="inline-block mt-6 text-blue-600 underline">← Назад к списку</a>
+
+{% endblock %}
