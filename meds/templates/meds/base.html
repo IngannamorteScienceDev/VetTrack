@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}VetTrack{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+  <header class="bg-blue-700 text-white shadow">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold tracking-wide">VetTrack</h1>
+      <nav class="space-x-4">
+        <a href="{% url 'drug_list' %}" class="hover:underline">Препараты</a>
+        {% if user.is_authenticated %}
+          <span class="text-sm">Пользователь: {{ user.username }}</span>
+          <a href="{% url 'admin:logout' %}" class="hover:underline">Выйти</a>
+        {% else %}
+          <a href="{% url 'admin:login' %}" class="hover:underline">Войти</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-6 py-8">
+    {% block content %}{% endblock %}
+  </main>
+
+</body>
+</html>

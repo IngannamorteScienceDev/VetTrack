@@ -1,0 +1,46 @@
+{% extends 'meds/base.html' %}
+{% block title %}Список препаратов{% endblock %}
+{% block content %}
+
+<h2 class="text-3xl font-bold mb-4">Список препаратов</h2>
+
+<table class="w-full table-auto bg-white shadow rounded-lg">
+  <thead>
+    <tr class="bg-blue-100">
+      <th class="px-4 py-2">Название</th>
+      <th class="px-4 py-2">Форма</th>
+      <th class="px-4 py-2">Срок годности</th>
+      <th class="px-4 py-2">Остаток</th>
+      <th class="px-4 py-2">Статус</th>
+      <th class="px-4 py-2">Действие</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for entry in annotated_drugs %}
+      {% with drug=entry.object status=entry.status %}
+      <tr class="border-t">
+        <td class="px-4 py-2">{{ drug.name }}</td>
+        <td class="px-4 py-2">{{ drug.form }}</td>
+        <td class="px-4 py-2">{{ drug.expiration_date }}</td>
+        <td class="px-4 py-2">{{ drug.quantity }}</td>
+        <td class="px-4 py-2">
+          {% if status == 'expired' %}
+            <span class="text-red-600 font-semibold">Просрочен</span>
+          {% elif status == 'soon' %}
+            <span class="text-yellow-500 font-semibold">Скоро истекает</span>
+          {% else %}
+            <span class="text-green-600">ОК</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2">
+          <a href="{% url 'create_movement' drug.id %}" class="text-blue-600 underline">Добавить движение</a>
+        </td>
+      </tr>
+      {% endwith %}
+    {% empty %}
+      <tr><td colspan="6" class="px-4 py-4 text-center text-gray-500">Нет препаратов</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
