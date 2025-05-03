@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.contrib import messages
 from .models import Drug, DrugMovement
-from .forms import DrugMovementForm
+from .forms import DrugMovementForm, DrugForm  # ← обновлено
 
 
 def is_veterinarian(user):
@@ -14,9 +14,8 @@ def is_veterinarian(user):
 def drug_list(request):
     drugs = Drug.objects.all().order_by('expiration_date')
     today = timezone.now().date()
-    status_filter = request.GET.get('status')  # ← фильтрация через GET
+    status_filter = request.GET.get('status')
 
-    # Генерируем список с пометками
     annotated_drugs = []
     for drug in drugs:
         if drug.expiration_date < today:
@@ -53,7 +52,6 @@ def create_movement(request, drug_id):
             movement.created_by = request.user
             movement.save()
 
-            # Автоматическое обновление количества в модели Drug
             if movement.movement_type == 'in':
                 drug.quantity += movement.quantity
             elif movement.movement_type == 'out':
@@ -69,3 +67,17 @@ def create_movement(request, drug_id):
         form = DrugMovementForm()
 
     return render(request, 'meds/create_movement.html', {'form': form, 'drug': drug})
+
+
+@login_required
+def create_drug(request):
+    if request.method == 'POST':
+        form = DrugForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Препарат успешно добавлен.")
+            return redirect('drug_list')
+    else:
+        form = DrugForm()
+
+    return render(request, 'meds/create_drug.html', {'form': form})
