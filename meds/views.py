@@ -162,3 +162,19 @@ def export_drug_history_excel(request, drug_id):
 
     wb.save(response)
     return response
+
+@login_required
+@user_passes_test(is_veterinarian)
+def edit_drug(request, drug_id):
+    drug = get_object_or_404(Drug, id=drug_id)
+
+    if request.method == 'POST':
+        form = DrugForm(request.POST, instance=drug)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Препарат обновлён.")
+            return redirect('drug_list')
+    else:
+        form = DrugForm(instance=drug)
+
+    return render(request, 'meds/edit_drug.html', {'form': form, 'drug': drug})

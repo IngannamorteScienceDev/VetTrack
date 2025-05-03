@@ -61,6 +61,7 @@
         <td class="px-4 py-2 space-y-1">
           <a href="{% url 'create_movement' drug.id %}" class="block text-blue-600 hover:underline">➕ Движение</a>
           <a href="{% url 'drug_history' drug.id %}" class="block text-gray-600 hover:underline">📄 История</a>
+          <a href="{% url 'edit_drug' drug.id %}" class="block text-indigo-600 hover:underline">✏️ Редактировать</a>
         </td>
       </tr>
       {% endwith %}
