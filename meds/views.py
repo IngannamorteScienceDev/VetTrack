@@ -235,3 +235,5 @@ def movement_report(request):
         'active_type': movement_type
     })
 
+def index(request):
+    return render(request, 'meds/index.html')
