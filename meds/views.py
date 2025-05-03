@@ -5,6 +5,8 @@ from django.contrib import messages
 from .models import Drug, DrugMovement
 from .forms import DrugMovementForm, DrugForm  # ← обновлено
 
+import openpyxl
+from django.http import HttpResponse
 
 def is_veterinarian(user):
     return user.groups.filter(name="Ветеринар").exists() or user.is_superuser
@@ -91,3 +93,35 @@ def drug_history(request, drug_id):
         'drug': drug,
         'movements': movements,
     })
+
+@login_required
+def export_drug_history_excel(request, drug_id):
+    drug = get_object_or_404(Drug, id=drug_id)
+    movements = DrugMovement.objects.filter(drug=drug).order_by('-date')
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "История движения"
+
+    # Заголовки
+    ws.append(["Дата", "Тип", "Количество", "Примечание"])
+
+    # Данные
+    for move in movements:
+        ws.append([
+            move.date.strftime("%d.%m.%Y %H:%M"),
+            "Приход" if move.movement_type == 'in' else "Расход",
+            move.quantity,
+            move.note or ""
+        ])
+
+    # Отправка файла
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    from django.utils.text import slugify
+    filename = f"history_{slugify(drug.name)}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    wb.save(response)
+    return response
