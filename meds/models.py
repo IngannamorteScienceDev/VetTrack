@@ -10,6 +10,7 @@ class Drug(models.Model):
     batch_number = models.CharField(max_length=100, verbose_name="Номер партии", blank=True)
     expiration_date = models.DateField(verbose_name="Срок годности")
     quantity = models.PositiveIntegerField(verbose_name="Количество (в штуках)")
+    is_archived = models.BooleanField(default=False, verbose_name="Архивирован")
 
     def __str__(self):
         return f"{self.name} ({self.form})"

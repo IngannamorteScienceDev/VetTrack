@@ -18,7 +18,7 @@ def is_veterinarian(user):
 
 @login_required
 def drug_list(request):
-    drugs = Drug.objects.all().order_by('expiration_date')
+    drugs = Drug.objects.filter(is_archived=False).order_by('expiration_date')
     today = timezone.now().date()
     status_filter = request.GET.get('status')
     search_query = request.GET.get('search', '').strip()
@@ -178,3 +178,15 @@ def edit_drug(request, drug_id):
         form = DrugForm(instance=drug)
 
     return render(request, 'meds/edit_drug.html', {'form': form, 'drug': drug})
+
+@login_required
+@user_passes_test(is_veterinarian)
+def toggle_archive_drug(request, drug_id):
+    drug = get_object_or_404(Drug, id=drug_id)
+    drug.is_archived = not drug.is_archived
+    drug.save()
+    if drug.is_archived:
+        messages.info(request, f"Препарат «{drug.name}» архивирован.")
+    else:
+        messages.success(request, f"Препарат «{drug.name}» восстановлен.")
+    return redirect('drug_list')
