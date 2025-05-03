@@ -4,14 +4,23 @@
 
 <h2 class="text-3xl font-bold mb-4">Список препаратов</h2>
 
-<!-- 🔍 Фильтры по статусу -->
-<div class="mb-4 space-x-4 text-sm">
-  <span class="text-gray-600">Фильтр:</span>
-  <a href="{% url 'drug_list' %}" class="{% if not active_filter %}font-semibold underline{% endif %} text-blue-600">Все</a>
-  <a href="?status=ok" class="{% if active_filter == 'ok' %}font-semibold underline{% endif %} text-green-600">Актуальные</a>
-  <a href="?status=soon" class="{% if active_filter == 'soon' %}font-semibold underline{% endif %} text-yellow-600">Истекающие</a>
-  <a href="?status=expired" class="{% if active_filter == 'expired' %}font-semibold underline{% endif %} text-red-600">Просроченные</a>
-</div>
+<!-- 🔍 Поиск и фильтр -->
+<form method="get" class="flex flex-wrap items-center gap-4 text-sm mb-4">
+  <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Поиск по названию"
+         class="border px-3 py-1 rounded w-60">
+
+  <span class="text-gray-600">Статус:</span>
+  <a href="{% url 'drug_list' %}?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}"
+     class="{% if not active_filter %}font-semibold underline{% endif %} text-blue-600">Все</a>
+  <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}status=ok"
+     class="{% if active_filter == 'ok' %}font-semibold underline{% endif %} text-green-600">Актуальные</a>
+  <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}status=soon"
+     class="{% if active_filter == 'soon' %}font-semibold underline{% endif %} text-yellow-600">Истекающие</a>
+  <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}status=expired"
+     class="{% if active_filter == 'expired' %}font-semibold underline{% endif %} text-red-600">Просроченные</a>
+
+  <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow">Поиск</button>
+</form>
 
 <!-- ➕ Кнопка добавления -->
 <div class="mb-6">
@@ -64,19 +73,22 @@
 <!-- 📄 Навигация по страницам -->
 <div class="mt-6 flex justify-center space-x-2">
   {% if page_obj.has_previous %}
-    <a href="?{% if active_filter %}status={{ active_filter }}&{% endif %}page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">&laquo;</a>
+    <a href="?{% if active_filter %}status={{ active_filter }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}page={{ page_obj.previous_page_number }}"
+       class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">&laquo;</a>
   {% endif %}
 
   {% for num in page_obj.paginator.page_range %}
     {% if page_obj.number == num %}
       <span class="px-3 py-1 bg-blue-600 text-white rounded">{{ num }}</span>
     {% elif num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
-      <a href="?{% if active_filter %}status={{ active_filter }}&{% endif %}page={{ num }}" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">{{ num }}</a>
+      <a href="?{% if active_filter %}status={{ active_filter }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}page={{ num }}"
+         class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">{{ num }}</a>
     {% endif %}
   {% endfor %}
 
   {% if page_obj.has_next %}
-    <a href="?{% if active_filter %}status={{ active_filter }}&{% endif %}page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">&raquo;</a>
+    <a href="?{% if active_filter %}status={{ active_filter }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}page={{ page_obj.next_page_number }}"
+       class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded">&raquo;</a>
   {% endif %}
 </div>
 

@@ -3,11 +3,14 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.contrib import messages
 from .models import Drug, DrugMovement
-from .forms import DrugMovementForm, DrugForm  # ← обновлено
+from .forms import DrugMovementForm, DrugForm
 from django.core.paginator import Paginator
-
-import openpyxl
+from django.utils.dateparse import parse_date
+from django.db.models import Q
 from django.http import HttpResponse
+from django.utils.text import slugify
+import openpyxl
+from datetime import timedelta
 
 def is_veterinarian(user):
     return user.groups.filter(name="Ветеринар").exists() or user.is_superuser
@@ -18,8 +21,12 @@ def drug_list(request):
     drugs = Drug.objects.all().order_by('expiration_date')
     today = timezone.now().date()
     status_filter = request.GET.get('status')
+    search_query = request.GET.get('search', '').strip()
 
-    annotated_drugs = []
+    if search_query:
+        drugs = drugs.filter(name__icontains=search_query)
+
+    annotated = []
     for drug in drugs:
         if drug.expiration_date < today:
             status = 'expired'
@@ -31,14 +38,15 @@ def drug_list(request):
         if status_filter and status != status_filter:
             continue
 
-        annotated_drugs.append({
-            'object': drug,
-            'status': status,
-        })
+        annotated.append({'object': drug, 'status': status})
+
+    paginator = Paginator(annotated, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
 
     return render(request, 'meds/drug_list.html', {
-        'annotated_drugs': annotated_drugs,
-        'active_filter': status_filter
+        'page_obj': page_obj,
+        'active_filter': status_filter,
     })
 
 
@@ -85,20 +93,47 @@ def create_drug(request):
 
     return render(request, 'meds/create_drug.html', {'form': form})
 
+
 @login_required
 def drug_history(request, drug_id):
     drug = get_object_or_404(Drug, id=drug_id)
-    movement_type = request.GET.get('type')  # ← фильтр из URL
+    movements = DrugMovement.objects.filter(drug=drug)
 
-    movements = DrugMovement.objects.filter(drug=drug).order_by('-date')
-    if movement_type in ['in', 'out']:
-        movements = movements.filter(movement_type=movement_type)
+    # Получаем параметры фильтра
+    start_date_str = request.GET.get("start_date")
+    end_date_str = request.GET.get("end_date")
+    quick = request.GET.get("quick")
+
+    # Обработка быстрых фильтров
+    today = timezone.now()
+    if quick == "7":
+        start_date = today - timedelta(days=7)
+        end_date = today
+    elif quick == "30":
+        start_date = today - timedelta(days=30)
+        end_date = today
+    else:
+        start_date = parse_date(start_date_str) if start_date_str else None
+        end_date = parse_date(end_date_str) if end_date_str else None
+
+    # Применение фильтра
+    if start_date and end_date:
+        movements = movements.filter(date__date__range=(start_date, end_date))
+    elif start_date:
+        movements = movements.filter(date__date__gte=start_date)
+    elif end_date:
+        movements = movements.filter(date__date__lte=end_date)
+
+    movements = movements.order_by('-date')
 
     return render(request, 'meds/drug_history.html', {
         'drug': drug,
         'movements': movements,
-        'active_type': movement_type  # передаём в шаблон
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        'quick': quick,
     })
+
 
 @login_required
 def export_drug_history_excel(request, drug_id):
@@ -109,10 +144,8 @@ def export_drug_history_excel(request, drug_id):
     ws = wb.active
     ws.title = "История движения"
 
-    # Заголовки
     ws.append(["Дата", "Тип", "Количество", "Примечание"])
 
-    # Данные
     for move in movements:
         ws.append([
             move.date.strftime("%d.%m.%Y %H:%M"),
@@ -121,43 +154,11 @@ def export_drug_history_excel(request, drug_id):
             move.note or ""
         ])
 
-    # Отправка файла
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    from django.utils.text import slugify
     filename = f"history_{slugify(drug.name)}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
     wb.save(response)
     return response
-
-@login_required
-def drug_list(request):
-    drugs = Drug.objects.all().order_by('expiration_date')
-    today = timezone.now().date()
-    status_filter = request.GET.get('status')
-
-    annotated = []
-    for drug in drugs:
-        if drug.expiration_date < today:
-            status = 'expired'
-        elif 0 <= (drug.expiration_date - today).days <= 7:
-            status = 'soon'
-        else:
-            status = 'ok'
-
-        if status_filter and status != status_filter:
-            continue
-
-        annotated.append({'object': drug, 'status': status})
-
-    # ⏬ Пагинация на 25 записей
-    paginator = Paginator(annotated, 25)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
-
-    return render(request, 'meds/drug_list.html', {
-        'page_obj': page_obj,
-        'active_filter': status_filter
-    })
