@@ -23,8 +23,19 @@
   </header>
 
   <main class="container mx-auto px-6 py-8">
-    {% block content %}{% endblock %}
-  </main>
+
+  {% if messages %}
+    <div class="space-y-2 mb-6">
+      {% for message in messages %}
+        <div class="px-4 py-3 rounded text-white {% if message.tags == 'success' %}bg-green-500{% elif message.tags == 'error' %}bg-red-500{% else %}bg-blue-500{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</main>
 
 </body>
 </html>
