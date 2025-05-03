@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.contrib import messages
 from .models import Drug, DrugMovement
 from .forms import DrugMovementForm, DrugForm  # ← обновлено
+from django.core.paginator import Paginator
 
 import openpyxl
 from django.http import HttpResponse
@@ -130,3 +131,33 @@ def export_drug_history_excel(request, drug_id):
 
     wb.save(response)
     return response
+
+@login_required
+def drug_list(request):
+    drugs = Drug.objects.all().order_by('expiration_date')
+    today = timezone.now().date()
+    status_filter = request.GET.get('status')
+
+    annotated = []
+    for drug in drugs:
+        if drug.expiration_date < today:
+            status = 'expired'
+        elif 0 <= (drug.expiration_date - today).days <= 7:
+            status = 'soon'
+        else:
+            status = 'ok'
+
+        if status_filter and status != status_filter:
+            continue
+
+        annotated.append({'object': drug, 'status': status})
+
+    # ⏬ Пагинация на 25 записей
+    paginator = Paginator(annotated, 25)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'meds/drug_list.html', {
+        'page_obj': page_obj,
+        'active_filter': status_filter
+    })
