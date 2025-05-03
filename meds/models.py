@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from datetime import date
 
 class Drug(models.Model):
@@ -30,10 +31,9 @@ class DrugMovement(models.Model):
     drug = models.ForeignKey(Drug, on_delete=models.CASCADE, verbose_name="Препарат")
     movement_type = models.CharField(max_length=3, choices=MOVEMENT_TYPE_CHOICES, verbose_name="Тип движения")
     quantity = models.PositiveIntegerField(verbose_name="Количество")
-    date = models.DateTimeField(auto_now_add=True, verbose_name="Дата")
+    date = models.DateTimeField(default=timezone.now, verbose_name="Дата")  # ← теперь можно задавать вручную
     note = models.TextField(blank=True, verbose_name="Примечание")
 
-    # 👇 Добавляем, кто создал запись
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
