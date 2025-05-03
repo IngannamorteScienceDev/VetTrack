@@ -4,6 +4,12 @@
 
 <h2 class="text-2xl font-bold mb-4">История движения: {{ drug.name }}</h2>
 
+<!-- 📤 Кнопка экспорта -->
+<a href="{% url 'export_drug_history_excel' drug.id %}"
+   class="inline-block mb-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+  📤 Экспорт в Excel
+</a>
+
 <table class="w-full table-auto bg-white shadow rounded-lg">
   <thead>
     <tr class="bg-blue-100">
