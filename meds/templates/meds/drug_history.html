@@ -4,6 +4,17 @@
 
 <h2 class="text-2xl font-bold mb-4">История движения: {{ drug.name }}</h2>
 
+<!-- 🔍 Фильтр по типу движения -->
+<div class="mb-4 space-x-4 text-sm">
+  <span class="text-gray-600">Фильтр:</span>
+  <a href="{% url 'drug_history' drug.id %}"
+     class="{% if not active_type %}font-semibold underline{% endif %} text-blue-600">Все</a>
+  <a href="?type=in"
+     class="{% if active_type == 'in' %}font-semibold underline{% endif %} text-green-600">Только приход</a>
+  <a href="?type=out"
+     class="{% if active_type == 'out' %}font-semibold underline{% endif %} text-red-600">Только расход</a>
+</div>
+
 <!-- 📤 Кнопка экспорта -->
 <a href="{% url 'export_drug_history_excel' drug.id %}"
    class="inline-block mb-6 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">

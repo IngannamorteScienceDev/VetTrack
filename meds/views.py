@@ -87,11 +87,16 @@ def create_drug(request):
 @login_required
 def drug_history(request, drug_id):
     drug = get_object_or_404(Drug, id=drug_id)
+    movement_type = request.GET.get('type')  # ← фильтр из URL
+
     movements = DrugMovement.objects.filter(drug=drug).order_by('-date')
+    if movement_type in ['in', 'out']:
+        movements = movements.filter(movement_type=movement_type)
 
     return render(request, 'meds/drug_history.html', {
         'drug': drug,
         'movements': movements,
+        'active_type': movement_type  # передаём в шаблон
     })
 
 @login_required
