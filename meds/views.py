@@ -18,7 +18,11 @@ def is_veterinarian(user):
 
 @login_required
 def drug_list(request):
-    drugs = Drug.objects.filter(is_archived=False).order_by('expiration_date')
+    show_archived = request.GET.get('archived') == '1'
+    if show_archived:
+        drugs = Drug.objects.filter(is_archived=True).order_by('expiration_date')
+    else:
+        drugs = Drug.objects.filter(is_archived=False).order_by('expiration_date')
     today = timezone.now().date()
     status_filter = request.GET.get('status')
     search_query = request.GET.get('search', '').strip()

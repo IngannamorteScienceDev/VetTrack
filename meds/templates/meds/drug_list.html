@@ -29,6 +29,13 @@
   </a>
 </div>
 
+<!-- 📁 Фильтр актив/архив -->
+<div class="mb-4 space-x-4 text-sm">
+  <span class="text-gray-600">Статус:</span>
+  <a href="{% url 'drug_list' %}" class="{% if not request.GET.archived %}font-semibold underline{% endif %} text-blue-600">Активные</a>
+  <a href="?archived=1" class="{% if request.GET.archived == '1' %}font-semibold underline{% endif %} text-gray-600">Архив</a>
+</div>
+
 <!-- 📋 Таблица препаратов -->
 <table class="w-full table-auto bg-white shadow rounded-lg">
   <thead>
