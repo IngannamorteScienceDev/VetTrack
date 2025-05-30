@@ -12,10 +12,13 @@ from django.utils.text import slugify
 import openpyxl
 from datetime import timedelta
 
+# Проверяем, является ли пользователь ветеринаром или администратором
 def is_veterinarian(user):
     return user.groups.filter(name="Ветеринар").exists() or user.is_superuser
 
 
+# Доступ разрешён только авторизованным пользователям
+# Отображение списка препаратов с возможностью фильтрации и поиска
 @login_required
 def drug_list(request):
     show_archived = request.GET.get('archived') == '1'
@@ -23,6 +26,7 @@ def drug_list(request):
         drugs = Drug.objects.filter(is_archived=True).order_by('expiration_date')
     else:
         drugs = Drug.objects.filter(is_archived=False).order_by('expiration_date')
+
     today = timezone.now().date()
     status_filter = request.GET.get('status')
     search_query = request.GET.get('search', '').strip()
@@ -54,6 +58,8 @@ def drug_list(request):
     })
 
 
+# Доступ только для ветеринаров или администраторов
+# Добавление нового движения препарата (приход или расход)
 @login_required
 @user_passes_test(is_veterinarian)
 def create_movement(request, drug_id):
@@ -84,6 +90,8 @@ def create_movement(request, drug_id):
     return render(request, 'meds/create_movement.html', {'form': form, 'drug': drug})
 
 
+# Доступ только для авторизованных
+# Создание нового препарата
 @login_required
 def create_drug(request):
     if request.method == 'POST':
@@ -98,17 +106,16 @@ def create_drug(request):
     return render(request, 'meds/create_drug.html', {'form': form})
 
 
+# Просмотр истории движения по конкретному препарату
 @login_required
 def drug_history(request, drug_id):
     drug = get_object_or_404(Drug, id=drug_id)
     movements = DrugMovement.objects.filter(drug=drug)
 
-    # Получаем параметры фильтра
     start_date_str = request.GET.get("start_date")
     end_date_str = request.GET.get("end_date")
     quick = request.GET.get("quick")
 
-    # Обработка быстрых фильтров
     today = timezone.now()
     if quick == "7":
         start_date = today - timedelta(days=7)
@@ -120,7 +127,6 @@ def drug_history(request, drug_id):
         start_date = parse_date(start_date_str) if start_date_str else None
         end_date = parse_date(end_date_str) if end_date_str else None
 
-    # Применение фильтра
     if start_date and end_date:
         movements = movements.filter(date__date__range=(start_date, end_date))
     elif start_date:
@@ -139,6 +145,7 @@ def drug_history(request, drug_id):
     })
 
 
+# Экспорт истории препарата в Excel
 @login_required
 def export_drug_history_excel(request, drug_id):
     drug = get_object_or_404(Drug, id=drug_id)
@@ -167,6 +174,8 @@ def export_drug_history_excel(request, drug_id):
     wb.save(response)
     return response
 
+
+# Редактирование данных препарата
 @login_required
 @user_passes_test(is_veterinarian)
 def edit_drug(request, drug_id):
@@ -183,6 +192,8 @@ def edit_drug(request, drug_id):
 
     return render(request, 'meds/edit_drug.html', {'form': form, 'drug': drug})
 
+
+# Включение/выключение архивации препарата (soft delete)
 @login_required
 @user_passes_test(is_veterinarian)
 def toggle_archive_drug(request, drug_id):
@@ -195,6 +206,8 @@ def toggle_archive_drug(request, drug_id):
         messages.success(request, f"Препарат «{drug.name}» восстановлен.")
     return redirect('drug_list')
 
+
+# Отчёт по движениям всех препаратов (сообща)
 @login_required
 def movement_report(request):
     movements = DrugMovement.objects.select_related("drug").order_by('-date')
@@ -204,7 +217,6 @@ def movement_report(request):
     movement_type = request.GET.get("type")
     quick = request.GET.get("quick")
 
-    # Быстрые фильтры
     today = timezone.now()
     if quick == "7":
         start_date = today - timedelta(days=7)
@@ -216,7 +228,6 @@ def movement_report(request):
         start_date = parse_date(start_date_str) if start_date_str else None
         end_date = parse_date(end_date_str) if end_date_str else None
 
-    # Применяем фильтры
     if start_date and end_date:
         movements = movements.filter(date__date__range=(start_date, end_date))
     elif start_date:
@@ -235,14 +246,17 @@ def movement_report(request):
         'active_type': movement_type
     })
 
+
+# Главная страница (может быть просто приветствием)
 def index(request):
     return render(request, 'meds/index.html')
 
+
+# Экспорт отчёта по движениям всех препаратов в Excel
 @login_required
 def movement_report_export_excel(request):
     movements = DrugMovement.objects.select_related("drug").order_by('-date')
 
-    # Фильтры
     start_date_str = request.GET.get("start_date")
     end_date_str = request.GET.get("end_date")
     movement_type = request.GET.get("type")
@@ -269,7 +283,6 @@ def movement_report_export_excel(request):
     if movement_type in ["in", "out"]:
         movements = movements.filter(movement_type=movement_type)
 
-    # Excel
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Движения"
@@ -292,4 +305,3 @@ def movement_report_export_excel(request):
     response['Content-Disposition'] = 'attachment; filename="movement_report.xlsx"'
     wb.save(response)
     return response
-
