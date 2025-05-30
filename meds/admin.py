@@ -1,3 +1,11 @@
+"""
+admin.py — Настройки административной панели Django
+
+Регистрирует модели Drug и DrugMovement в админке:
+- настраивает отображение колонок, фильтров и поиска;
+- позволяет удобно управлять данными через интерфейс администратора.
+"""
+
 from django.contrib import admin
 from .models import Drug, DrugMovement
 

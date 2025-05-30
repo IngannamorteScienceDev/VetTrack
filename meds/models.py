@@ -1,3 +1,13 @@
+"""
+models.py — Модели базы данных
+
+Определяет структуру хранимых данных:
+- Drug — модель препарата, содержит данные о названии, форме, сроке годности и т.д.;
+- DrugMovement — модель движения препарата (приход или расход).
+
+Используется ORM Django для взаимодействия с базой данных.
+"""
+
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
