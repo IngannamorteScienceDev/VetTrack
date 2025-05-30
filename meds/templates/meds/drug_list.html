@@ -1,14 +1,28 @@
+{#
+  📄 drug_list.html — Страница со списком всех препаратов
+
+  Этот шаблон:
+  - Показывает таблицу со всеми препаратами (активными или архивными);
+  - Позволяет искать по названию и фильтровать по статусу (ОК, скоро истекает, просрочен);
+  - Позволяет переключаться между активными и архивированными записями;
+  - Включает действия для каждого препарата: добавить движение, посмотреть историю, редактировать, архивировать;
+  - Использует пагинацию (разбивку по страницам);
+  - Основан на представлении views.drug_list.
+#}
+
 {% extends 'meds/base.html' %}
 {% block title %}Список препаратов{% endblock %}
 {% block content %}
 
+<!-- Заголовок страницы -->
 <h2 class="text-3xl font-bold mb-4">Список препаратов</h2>
 
-<!-- 🔍 Поиск и фильтр -->
+<!-- 🔍 Форма поиска и фильтрации по сроку годности -->
 <form method="get" class="flex flex-wrap items-center gap-4 text-sm mb-4">
   <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Поиск по названию"
          class="border px-3 py-1 rounded w-60">
 
+  <!-- Кнопки фильтра по статусу срока годности -->
   <span class="text-gray-600">Статус:</span>
   <a href="{% url 'drug_list' %}?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}"
      class="{% if not active_filter %}font-semibold underline{% endif %} text-blue-600">Все</a>
@@ -22,21 +36,21 @@
   <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow">Поиск</button>
 </form>
 
-<!-- ➕ Кнопка добавления -->
+<!-- ➕ Кнопка добавления нового препарата -->
 <div class="mb-6">
   <a href="{% url 'create_drug' %}" class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow">
     ➕ Добавить препарат
   </a>
 </div>
 
-<!-- 📁 Фильтр актив/архив -->
+<!-- 📁 Переключение между активными и архивными препаратами -->
 <div class="mb-4 space-x-4 text-sm">
   <span class="text-gray-600">Статус:</span>
   <a href="{% url 'drug_list' %}" class="{% if not request.GET.archived %}font-semibold underline{% endif %} text-blue-600">Активные</a>
   <a href="?archived=1" class="{% if request.GET.archived == '1' %}font-semibold underline{% endif %} text-gray-600">Архив</a>
 </div>
 
-<!-- 📋 Таблица препаратов -->
+<!-- 📋 Таблица с данными о препаратах -->
 <table class="w-full table-auto bg-white shadow rounded-lg">
   <thead>
     <tr class="bg-blue-100">
@@ -71,11 +85,11 @@
           <a href="{% url 'edit_drug' drug.id %}" class="block text-indigo-600 hover:underline">✏️ Редактировать</a>
           <a href="{% url 'toggle_archive_drug' drug.id %}" class="block text-red-600 hover:underline">
           {% if drug.is_archived %}
-          ♻️ Восстановить
+            ♻️ Восстановить
           {% else %}
-          🗑 Архивировать
+            🗑 Архивировать
           {% endif %}
-        </a>
+          </a>
         </td>
       </tr>
       {% endwith %}
@@ -85,7 +99,7 @@
   </tbody>
 </table>
 
-<!-- 📄 Навигация по страницам -->
+<!-- 📄 Навигация по страницам (пагинация) -->
 <div class="mt-6 flex justify-center space-x-2">
   {% if page_obj.has_previous %}
     <a href="?{% if active_filter %}status={{ active_filter }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}page={{ page_obj.previous_page_number }}"
